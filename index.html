@@ -224,11 +224,33 @@
     background: var(--screen-fg);
     box-shadow: 0 0 6px rgba(124,255,178,0.6);
     animation: blink 5.2s infinite;
+    transform-origin: center bottom;
   }
   .eye:nth-child(2){ animation-delay: 0.15s; }
   @keyframes blink{
     0%, 92%, 100% { transform: scaleY(1); }
     95% { transform: scaleY(0.1); }
+  }
+
+  .eye.widen{
+    animation: eyeWiden 0.7s ease;
+  }
+  @keyframes eyeWiden{
+    0%   { transform: scaleY(1) scaleX(1); }
+    35%  { transform: scaleY(2) scaleX(1.4); box-shadow: 0 0 10px rgba(124,255,178,0.9); }
+    100% { transform: scaleY(1) scaleX(1); }
+  }
+
+  .eye.roll{
+    animation: eyeRoll 1s ease;
+  }
+  @keyframes eyeRoll{
+    0%   { transform: translate(0, 0) scaleY(1); }
+    20%  { transform: translate(-2.5px, -3px) scaleY(1.15); }
+    40%  { transform: translate(2.5px, -3.5px) scaleY(1.15); }
+    60%  { transform: translate(2.5px, 1px) scaleY(1.15); }
+    80%  { transform: translate(-2.5px, 1px) scaleY(1.15); }
+    100% { transform: translate(0, 0) scaleY(1); }
   }
 
   .keys{
@@ -404,7 +426,7 @@
     <div class="calc">
       <div class="brandplate">MODEL WR-04 · CERTIFIED CONFIDENT</div>
       <div class="screen">
-        <div class="eyes"><div class="eye"></div><div class="eye"></div></div>
+        <div class="eyes" id="calcEyes"><div class="eye"></div><div class="eye"></div></div>
         <div class="sub" id="sub">&nbsp;</div>
         <div class="main" id="main">0</div>
       </div>
@@ -691,6 +713,19 @@
 
   render();
 
+  function reactEyes(effect, duration){
+    const eyes = document.querySelectorAll('#calcEyes .eye');
+    if (!eyes.length) return;
+    eyes.forEach(eye => {
+      eye.classList.remove('widen', 'roll');
+      void eye.offsetWidth; // restart animation if already mid-reaction
+      eye.classList.add(effect);
+    });
+    setTimeout(() => {
+      eyes.forEach(eye => eye.classList.remove(effect));
+    }, duration || 1000);
+  }
+
   // ---------------- Chat engine ----------------
 
   const messagesEl = document.getElementById('messages');
@@ -775,6 +810,7 @@
 
     // user says the actual correct answer
     if (hasCalc && correctStr && correctStr !== 'ERR' && m.includes(correctStr.toLowerCase())){
+      reactEyes('widen', 700);
       calcSpeak([
         "No. It's " + wrongStr + ". I already checked. Several times.",
         "I've heard that number before, from people who were also wrong.",
@@ -795,6 +831,8 @@
 
     // explicit wrong / error / broken accusations, with context
     if (/\b(wrong|incorrect|error|mistake|broken|bug|glitch|off|nonsense)\b/.test(m)){
+      reactEyes('widen', 500);
+      setTimeout(() => reactEyes('roll', 1000), 550);
       if (hasCalc){
         calcSpeak([
           "Walk me through it, then. " + eqStr + " equals " + wrongStr + ". Where's the flaw in that.",
@@ -819,6 +857,7 @@
 
     // insults
     if (/\b(stupid|dumb|idiot|garbage|useless|trash|hate you)\b/.test(m)){
+      reactEyes('roll', 1000);
       calcSpeak([
         "Rude. Also incorrect, but mostly rude.",
         "I have eight buttons dedicated entirely to numbers. What have you built lately?",
