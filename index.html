@@ -379,20 +379,19 @@
 
   .peeker{
     position: absolute;
-    top: -46px;
+    top: -58px;
     right: 38px;
     width: 112px;
-    height: 92px;
-    transform: translateY(60px) scale(0.9);
-    opacity: 0;
+    height: 108px;
+    z-index: -1;
     pointer-events: none;
-    transition: transform 0.5s cubic-bezier(.32,1.6,.5,1), opacity 0.28s ease;
-    z-index: 6;
+    transform: translateY(76px);
+    transition: transform 0.75s cubic-bezier(.22,.85,.32,1);
   }
 
   .peeker.show{
-    transform: translateY(0) scale(1);
-    opacity: 1;
+    transform: translateY(0);
+    transition: transform 0.85s cubic-bezier(.2,.7,.2,1);
   }
 
   .peeker-head{
@@ -510,6 +509,93 @@
   .peeker-hand .f1{ left: 1px; }
   .peeker-hand .f2{ left: 11px; top: -2px; }
   .peeker-hand .f3{ left: 21px; }
+
+  /* ---- moods & idle actions ---- */
+
+  .peek-cheek{
+    position: absolute;
+    top: 30px;
+    width: 10px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--key-equals);
+    opacity: 0;
+    transition: opacity 0.2s ease;
+  }
+  .peek-cheek.l{ left: 3px; }
+  .peek-cheek.r{ right: 3px; }
+
+  .peeker.mood-angry .peek-cheek{ opacity: 0.6; }
+
+  .peeker.mood-angry .peeker-brow.left{ top: 22px; transform: rotate(14deg); background: var(--key-equals); }
+  .peeker.mood-angry .peeker-brow.right{ top: 22px; transform: rotate(-14deg); background: var(--key-equals); }
+
+  .peeker.mood-angry .peeker-mouth{
+    width: 16px;
+    height: 4px;
+    margin-left: -8px;
+    top: 39px;
+    border: none;
+    border-radius: 2px;
+    background: var(--case-darker);
+  }
+  .peeker.mood-angry .peek-tongue{ display: none; }
+
+  .peeker.show.mood-angry .peeker-head{
+    animation: angryShake 0.35s ease-in-out infinite;
+  }
+  @keyframes angryShake{
+    0%, 100% { transform: rotate(0deg); }
+    25% { transform: rotate(-7deg); }
+    75% { transform: rotate(7deg); }
+  }
+
+  .peek-wave-hand{
+    position: absolute;
+    top: 6px;
+    right: -6px;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: #E7A96C;
+    box-shadow: 0 4px 6px -2px rgba(12,51,47,0.3);
+    opacity: 0;
+    transform-origin: 20% 80%;
+  }
+  .peeker.show.act-wave .peek-wave-hand{
+    opacity: 1;
+    animation: waveHi 0.5s ease-in-out infinite;
+  }
+  @keyframes waveHi{
+    0%, 100% { transform: rotate(0deg); }
+    50% { transform: rotate(35deg); }
+  }
+
+  .peeker.show.act-look .peeker-eyes{
+    animation: eyesLook 1.3s ease-in-out infinite;
+  }
+  @keyframes eyesLook{
+    0%, 100% { transform: translateX(-50%); }
+    30% { transform: translateX(-80%); }
+    70% { transform: translateX(-20%); }
+  }
+
+  .peek-tongue{
+    display: block;
+    width: 6px;
+    height: 0;
+    margin: 0 auto;
+    background: #E06C6C;
+    border-radius: 0 0 4px 4px;
+    transition: height 0.15s ease;
+  }
+  .peeker.show.act-tongue .peek-tongue{
+    animation: tongueOut 1s ease-in-out infinite;
+  }
+  @keyframes tongueOut{
+    0%, 100% { height: 0; }
+    40%, 70% { height: 7px; }
+  }
 
   .chat-head{
     padding: 16px 20px;
@@ -695,7 +781,10 @@
           <span class="palm"></span>
           <span class="finger f1"></span><span class="finger f2"></span><span class="finger f3"></span>
         </div>
+        <div class="peek-wave-hand"></div>
         <div class="peeker-head">
+          <div class="peek-cheek l"></div>
+          <div class="peek-cheek r"></div>
           <div class="peeker-hair"></div>
           <div class="peeker-brow left"></div>
           <div class="peeker-brow right"></div>
@@ -703,7 +792,7 @@
             <div class="eye peeker-eye"></div>
             <div class="eye peeker-eye"></div>
           </div>
-          <div class="peeker-mouth"></div>
+          <div class="peeker-mouth"><div class="peek-tongue"></div></div>
         </div>
       </div>
       <div class="chat-head">
@@ -995,6 +1084,23 @@
     messagesEl.scrollTop = messagesEl.scrollHeight;
   }
 
+  let nextPeekerMood = null;
+
+  function preparePeeker(){
+    const peeker = document.getElementById('peeker');
+    if (!peeker) return;
+    peeker.classList.remove('mood-angry', 'act-wave', 'act-look', 'act-tongue');
+
+    if (nextPeekerMood === 'angry'){
+      peeker.classList.add('mood-angry');
+    } else {
+      const actions = ['act-wave', 'act-look', 'act-tongue', null, null];
+      const pick = actions[Math.floor(Math.random() * actions.length)];
+      if (pick) peeker.classList.add(pick);
+    }
+    nextPeekerMood = null;
+  }
+
   function showTyping(){
     const t = document.createElement('div');
     t.className = 'typing';
@@ -1002,6 +1108,7 @@
     t.innerHTML = '<span></span><span></span><span></span>';
     messagesEl.appendChild(t);
     messagesEl.scrollTop = messagesEl.scrollHeight;
+    preparePeeker();
     const peeker = document.getElementById('peeker');
     if (peeker) peeker.classList.add('show');
   }
@@ -1018,7 +1125,7 @@
     setTimeout(() => {
       hideTyping();
       addMessage(text, 'calc');
-    }, delay || (500 + Math.random() * 500));
+    }, delay || (1100 + Math.random() * 700));
   }
 
   function announceResult(calc){
@@ -1029,7 +1136,7 @@
       "The screen says " + formatNum(calc.wrong) + ", so it's " + formatNum(calc.wrong) + "."
     ];
     if (Math.random() < 0.6){
-      calcSpeak(lines[Math.floor(Math.random() * lines.length)], 350);
+      calcSpeak(lines[Math.floor(Math.random() * lines.length)], 900);
     }
   }
 
@@ -1094,6 +1201,7 @@
       reactEyes('widen', 500);
       setMouth('gasp', 500);
       setTimeout(() => { reactEyes('roll', 1000); setMouth('mad', 1000); }, 550);
+      nextPeekerMood = 'angry';
       if (hasCalc){
         calcSpeak([
           "Walk me through it, then. " + eqStr + " equals " + wrongStr + ". Where's the flaw in that.",
@@ -1120,6 +1228,7 @@
     if (/\b(stupid|dumb|idiot|garbage|useless|trash|hate you)\b/.test(m)){
       reactEyes('roll', 1000);
       setMouth('mad', 1000);
+      nextPeekerMood = 'angry';
       calcSpeak([
         "Rude. Also incorrect, but mostly rude.",
         "I have eight buttons dedicated entirely to numbers. What have you built lately?",
