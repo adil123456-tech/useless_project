@@ -374,7 +374,142 @@
     flex-direction:column;
     height: 560px;
     max-height: 70vh;
+    position: relative;
   }
+
+  .peeker{
+    position: absolute;
+    top: -46px;
+    right: 38px;
+    width: 112px;
+    height: 92px;
+    transform: translateY(60px) scale(0.9);
+    opacity: 0;
+    pointer-events: none;
+    transition: transform 0.5s cubic-bezier(.32,1.6,.5,1), opacity 0.28s ease;
+    z-index: 6;
+  }
+
+  .peeker.show{
+    transform: translateY(0) scale(1);
+    opacity: 1;
+  }
+
+  .peeker-head{
+    position: absolute;
+    top: 0;
+    left: 50%;
+    width: 54px;
+    height: 54px;
+    margin-left: -27px;
+    border-radius: 50%;
+    background: #F6C662;
+    box-shadow: 0 10px 16px -8px rgba(0,0,0,0.35);
+  }
+
+  .peeker.show .peeker-head{
+    animation: curiousTilt 1.8s ease-in-out infinite;
+    transform-origin: 50% 85%;
+  }
+
+  @keyframes curiousTilt{
+    0%, 100% { transform: rotate(0deg); }
+    50% { transform: rotate(-10deg); }
+  }
+
+  .peeker-hair{
+    position: absolute;
+    top: -9px;
+    left: 5px;
+    width: 44px;
+    height: 24px;
+    background: var(--case-dark);
+    border-radius: 50% 50% 6px 6px / 75% 75% 10px 10px;
+  }
+  .peeker-hair::before, .peeker-hair::after{
+    content: "";
+    position: absolute;
+    top: -7px;
+    width: 11px;
+    height: 17px;
+    background: var(--case-dark);
+    border-radius: 60% 40% 60% 40%;
+  }
+  .peeker-hair::before{ left: 1px; transform: rotate(-20deg); }
+  .peeker-hair::after{ right: 1px; transform: rotate(20deg); }
+
+  .peeker-brow{
+    position: absolute;
+    top: 19px;
+    width: 10px;
+    height: 3px;
+    background: var(--case-dark);
+    border-radius: 2px;
+  }
+  .peeker-brow.left{ left: 12px; transform: rotate(-16deg); }
+  .peeker-brow.right{ right: 12px; transform: rotate(16deg); }
+
+  .peeker-eyes{
+    position: absolute;
+    top: 25px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 11px;
+  }
+
+  .eye.peeker-eye{
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--case-darker);
+    box-shadow: none;
+  }
+
+  .peeker-mouth{
+    position: absolute;
+    top: 36px;
+    left: 50%;
+    width: 12px;
+    height: 8px;
+    margin-left: -6px;
+    border: 2px solid var(--case-darker);
+    border-top: none;
+    border-radius: 0 0 10px 10px;
+    background: transparent;
+  }
+
+  .peeker-hand{
+    position: absolute;
+    bottom: 4px;
+    width: 30px;
+    height: 22px;
+  }
+  .peeker-hand.left{ left: -2px; }
+  .peeker-hand.right{ right: -2px; }
+
+  .peeker-hand .palm{
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 14px;
+    background: #F6C662;
+    border-radius: 8px 8px 11px 11px;
+    box-shadow: 0 6px 10px -6px rgba(0,0,0,0.3);
+  }
+
+  .peeker-hand .finger{
+    position: absolute;
+    top: 0;
+    width: 7px;
+    height: 12px;
+    background: #F6C662;
+    border-radius: 4px 4px 3px 3px;
+  }
+  .peeker-hand .f1{ left: 1px; }
+  .peeker-hand .f2{ left: 11px; top: -2px; }
+  .peeker-hand .f3{ left: 21px; }
 
   .chat-head{
     padding: 16px 20px;
@@ -506,7 +641,7 @@
   <div class="stage">
 
     <div class="calc">
-      <div class="brandplate">MODEL Wrongy · CERTIFIED CONFIDENT</div>
+      <div class="brandplate">MODEL WR-04 · CERTIFIED CONFIDENT</div>
       <div class="screen">
         <div class="eyes" id="calcEyes"><div class="eye"></div><div class="eye"></div></div>
         <div class="sub" id="sub">&nbsp;</div>
@@ -547,10 +682,30 @@
         </div>
         <div class="bot-mouth" id="botMouth"></div>
       </div>
-      <div class="bot-label">Wrongy</div>
+      <div class="bot-label">WR-04</div>
     </div>
 
     <div class="chat">
+      <div class="peeker" id="peeker">
+        <div class="peeker-hand left">
+          <span class="palm"></span>
+          <span class="finger f1"></span><span class="finger f2"></span><span class="finger f3"></span>
+        </div>
+        <div class="peeker-hand right">
+          <span class="palm"></span>
+          <span class="finger f1"></span><span class="finger f2"></span><span class="finger f3"></span>
+        </div>
+        <div class="peeker-head">
+          <div class="peeker-hair"></div>
+          <div class="peeker-brow left"></div>
+          <div class="peeker-brow right"></div>
+          <div class="peeker-eyes">
+            <div class="eye peeker-eye"></div>
+            <div class="eye peeker-eye"></div>
+          </div>
+          <div class="peeker-mouth"></div>
+        </div>
+      </div>
       <div class="chat-head">
         <div class="dot"></div>
         <div>
@@ -847,11 +1002,15 @@
     t.innerHTML = '<span></span><span></span><span></span>';
     messagesEl.appendChild(t);
     messagesEl.scrollTop = messagesEl.scrollHeight;
+    const peeker = document.getElementById('peeker');
+    if (peeker) peeker.classList.add('show');
   }
 
   function hideTyping(){
     const t = document.getElementById('typingIndicator');
     if (t) t.remove();
+    const peeker = document.getElementById('peeker');
+    if (peeker) peeker.classList.remove('show');
   }
 
   function calcSpeak(text, delay){
