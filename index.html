@@ -137,13 +137,19 @@
 
   .stage{
     display:grid;
-    grid-template-columns: 340px 1fr;
-    gap: 26px;
+    grid-template-columns: 300px 200px 1fr;
+    gap: 22px;
     align-items: start;
+  }
+
+  @media (max-width: 980px){
+    .stage{ grid-template-columns: 300px 1fr; }
+    .bot{ grid-column: 1 / -1; }
   }
 
   @media (max-width: 760px){
     .stage{ grid-template-columns: 1fr; }
+    .bot{ grid-column: auto; }
   }
 
   /* ---------- Calculator body ---------- */
@@ -280,6 +286,82 @@
   button.key.util{ background: var(--key-util); color: var(--key-util-ink); }
   button.key.equals{ background: var(--key-equals); color: var(--key-equals-ink); font-size: 1.3rem; }
   button.key.wide{ grid-column: span 2; }
+
+  /* ---------- Bot mascot ---------- */
+
+  .bot{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:flex-start;
+    padding-top: 40px;
+    gap: 14px;
+  }
+
+  .bot-face{
+    width: 156px;
+    height: 156px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 32% 28%, var(--case-sheen), transparent 55%),
+                linear-gradient(160deg, var(--case) 0%, var(--case-dark) 100%);
+    box-shadow:
+      0 24px 40px -18px rgba(12,51,47,0.5),
+      inset 0 2px 0 var(--case-sheen);
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    gap: 16px;
+    animation: botFloat 3.6s ease-in-out infinite;
+  }
+
+  @keyframes botFloat{
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-7px); }
+  }
+
+  .bot-eyes{
+    display:flex;
+    gap: 20px;
+  }
+
+  .eye.bot-eye{
+    width: 18px;
+    height: 24px;
+    border-radius: 8px;
+  }
+
+  .bot-mouth{
+    width: 40px;
+    height: 18px;
+    border-bottom: 5px solid var(--screen-fg);
+    border-radius: 0 0 40px 40px;
+    box-shadow: 0 2px 6px rgba(124,255,178,0.35);
+    transition: all 0.2s ease;
+  }
+
+  .bot-mouth.gasp{
+    width: 24px;
+    height: 24px;
+    border: 5px solid var(--screen-fg);
+    border-radius: 50%;
+  }
+
+  .bot-mouth.mad{
+    border-bottom: none;
+    border-top: 5px solid var(--key-equals);
+    border-radius: 40px 40px 0 0;
+    height: 14px;
+    box-shadow: 0 -2px 6px rgba(255,93,93,0.35);
+  }
+
+  .bot-label{
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    color: var(--ink-soft);
+    text-align:center;
+  }
 
   /* ---------- Chat panel ---------- */
 
@@ -455,6 +537,17 @@
         <button class="key" data-action="decimal">.</button>
         <button class="key equals" data-action="equals">=</button>
       </div>
+    </div>
+
+    <div class="bot" id="bot">
+      <div class="bot-face">
+        <div class="bot-eyes">
+          <div class="eye bot-eye"></div>
+          <div class="eye bot-eye"></div>
+        </div>
+        <div class="bot-mouth" id="botMouth"></div>
+      </div>
+      <div class="bot-label">WR-04</div>
     </div>
 
     <div class="chat">
@@ -714,7 +807,7 @@
   render();
 
   function reactEyes(effect, duration){
-    const eyes = document.querySelectorAll('#calcEyes .eye');
+    const eyes = document.querySelectorAll('.eye');
     if (!eyes.length) return;
     eyes.forEach(eye => {
       eye.classList.remove('widen', 'roll');
@@ -724,6 +817,13 @@
     setTimeout(() => {
       eyes.forEach(eye => eye.classList.remove(effect));
     }, duration || 1000);
+  }
+
+  function setMouth(state, duration){
+    const mouth = document.getElementById('botMouth');
+    if (!mouth) return;
+    mouth.className = 'bot-mouth ' + state;
+    setTimeout(() => { mouth.className = 'bot-mouth'; }, duration || 900);
   }
 
   // ---------------- Chat engine ----------------
@@ -811,6 +911,7 @@
     // user says the actual correct answer
     if (hasCalc && correctStr && correctStr !== 'ERR' && m.includes(correctStr.toLowerCase())){
       reactEyes('widen', 700);
+      setMouth('gasp', 700);
       calcSpeak([
         "No. It's " + wrongStr + ". I already checked. Several times.",
         "I've heard that number before, from people who were also wrong.",
@@ -832,7 +933,8 @@
     // explicit wrong / error / broken accusations, with context
     if (/\b(wrong|incorrect|error|mistake|broken|bug|glitch|off|nonsense)\b/.test(m)){
       reactEyes('widen', 500);
-      setTimeout(() => reactEyes('roll', 1000), 550);
+      setMouth('gasp', 500);
+      setTimeout(() => { reactEyes('roll', 1000); setMouth('mad', 1000); }, 550);
       if (hasCalc){
         calcSpeak([
           "Walk me through it, then. " + eqStr + " equals " + wrongStr + ". Where's the flaw in that.",
@@ -858,6 +960,7 @@
     // insults
     if (/\b(stupid|dumb|idiot|garbage|useless|trash|hate you)\b/.test(m)){
       reactEyes('roll', 1000);
+      setMouth('mad', 1000);
       calcSpeak([
         "Rude. Also incorrect, but mostly rude.",
         "I have eight buttons dedicated entirely to numbers. What have you built lately?",
