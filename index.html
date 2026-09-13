@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Wrongulator</title>
+<link rel="icon" type="image/png" href="logo1.png">
 <style>
   :root{
     --paper: #FBF7EE;
@@ -67,10 +68,25 @@
     letter-spacing: -0.02em;
     margin: 0;
     color: var(--case-darker);
+    white-space: nowrap;
   }
 
-  h1 span{
+  h1 .accent{
     color: var(--key-equals);
+  }
+
+  h1 .cursor{
+    display:inline-block;
+    width: 3px;
+    margin-left: 3px;
+    background: var(--case-darker);
+    animation: caretblink 0.9s step-end infinite;
+    transform: translateY(2px);
+  }
+
+  @keyframes caretblink{
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0; }
   }
 
   .tagline{
@@ -338,7 +354,7 @@
 <div class="wrap">
   <header>
     <div class="brand">
-      <h1>Wrong<span>ulator</span></h1>
+      <h1 id="title" aria-label="Wrongulator"><span id="titleMain"></span><span id="titleAccent" class="accent"></span><span class="cursor" id="titleCursor">&nbsp;</span></h1>
     </div>
     <p class="tagline">A calculator that answers with total confidence. Accuracy not included. Try 8 + 7.</p>
   </header>
@@ -401,6 +417,37 @@
 
 <script>
 (function(){
+
+  // ---------------- Title typewriter ----------------
+
+  function typeTitle(){
+    const mainPart = 'Wrong';
+    const accentPart = 'ulator';
+    const mainEl = document.getElementById('titleMain');
+    const accentEl = document.getElementById('titleAccent');
+    const cursorEl = document.getElementById('titleCursor');
+    const full = mainPart + accentPart;
+    let i = 0;
+    const speed = 90;
+
+    function tick(){
+      if (i < full.length){
+        i++;
+        if (i <= mainPart.length){
+          mainEl.textContent = full.slice(0, i);
+        } else {
+          accentEl.textContent = full.slice(mainPart.length, i);
+        }
+        const jitter = Math.random() * 60;
+        setTimeout(tick, speed + jitter);
+      } else {
+        setTimeout(() => { cursorEl.style.animationDuration = '1.1s'; }, 300);
+      }
+    }
+    setTimeout(tick, 250);
+  }
+
+  typeTitle();
 
   // ---------------- Calculator engine ----------------
 
