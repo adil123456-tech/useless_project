@@ -37,6 +37,8 @@
 
   *{ box-sizing: border-box; }
 
+  html, body{ overflow-x: hidden; }
+
   body{
     margin:0;
     min-height:100vh;
@@ -44,11 +46,47 @@
     color: var(--ink);
     font-family: ui-rounded, "SF Pro Rounded", Nunito, "Segoe UI", system-ui, sans-serif;
     padding: 28px 16px 60px;
+    position: relative;
+  }
+
+  .math-bg{
+    position: fixed;
+    inset: 0;
+    overflow: hidden;
+    z-index: 0;
+    pointer-events: none;
+  }
+
+  .math-bg .sym{
+    position: absolute;
+    top: 100%;
+    left: var(--left);
+    font-weight: 800;
+    font-family: "Courier New", Consolas, monospace;
+    color: var(--sym-color);
+    text-shadow: 0 0 14px var(--sym-color);
+    -webkit-text-stroke: 1px rgba(255,255,255,0.35);
+    opacity: 0;
+    will-change: transform, opacity;
+    animation-name: symbolDrift;
+    animation-timing-function: linear;
+    animation-iteration-count: infinite;
+    animation-duration: var(--dur);
+    animation-delay: var(--delay);
+  }
+
+  @keyframes symbolDrift{
+    0%   { transform: translate(0, 0) rotate(0deg); opacity: 0; }
+    8%   { opacity: var(--op); }
+    92%  { opacity: var(--op); }
+    100% { transform: translate(var(--dx), -125vh) rotate(var(--rot)); opacity: 0; }
   }
 
   .wrap{
     max-width: 980px;
     margin: 0 auto;
+    position: relative;
+    z-index: 1;
   }
 
   header{
@@ -351,6 +389,8 @@
 </head>
 <body>
 
+<div class="math-bg" id="mathBg"></div>
+
 <div class="wrap">
   <header>
     <div class="brand">
@@ -417,6 +457,52 @@
 
 <script>
 (function(){
+
+  // ---------------- Floating math background ----------------
+
+  function spawnSymbol(container, colors, symbols){
+    const el = document.createElement('div');
+    el.className = 'sym';
+    el.textContent = symbols[Math.floor(Math.random() * symbols.length)];
+
+    const size = 26 + Math.random() * 60;
+    const dur = 10 + Math.random() * 14;
+    const drift = (Math.random() - 0.5) * 260;
+    const rot = (Math.random() - 0.5) * 540;
+    const opacity = 0.35 + Math.random() * 0.35;
+    const left = Math.random() * 100;
+    const color = colors[Math.floor(Math.random() * colors.length)];
+
+    el.style.setProperty('--left', left + '%');
+    el.style.setProperty('--dx', drift + 'px');
+    el.style.setProperty('--rot', rot + 'deg');
+    el.style.setProperty('--dur', dur + 's');
+    el.style.setProperty('--delay', '0s');
+    el.style.setProperty('--op', opacity);
+    el.style.setProperty('--sym-color', color);
+    el.style.fontSize = size + 'px';
+
+    container.appendChild(el);
+
+    setTimeout(() => el.remove(), (dur * 1000) + 200);
+  }
+
+  function startMathBackground(){
+    const container = document.getElementById('mathBg');
+    if (!container) return;
+    const symbols = ['+', '−', '×', '÷', '='];
+    const colors = ['#1F7A72', '#F2A65A', '#FF5D5D', '#0FA968', '#124A45', '#B8452F'];
+
+    // seed an initial batch at staggered "ages" so it doesn't start empty
+    for (let i = 0; i < 18; i++){
+      setTimeout(() => spawnSymbol(container, colors, symbols), i * 220);
+    }
+
+    // keep replenishing
+    setInterval(() => spawnSymbol(container, colors, symbols), 550);
+  }
+
+  startMathBackground();
 
   // ---------------- Title typewriter ----------------
 
