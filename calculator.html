@@ -1,0 +1,1286 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Wrongulator</title>
+<link rel="icon" type="image/png" href="logo1.png">
+<style>
+  :root{
+    --paper: #FBF7EE;
+    --ink: #182B27;
+    --ink-soft: #4B5C58;
+
+    --case: #1F7A72;
+    --case-dark: #124A45;
+    --case-darker: #0C332F;
+    --case-sheen: rgba(255,255,255,0.16);
+
+    --screen-bg: #0B1F16;
+    --screen-fg: #7CFFB2;
+    --screen-fg-dim: rgba(124,255,178,0.4);
+
+    --key-cream: #F4EFE0;
+    --key-cream-ink: #2B2620;
+    --key-op: #F2A65A;
+    --key-op-ink: #3A2408;
+    --key-equals: #FF5D5D;
+    --key-equals-ink: #3A0A0A;
+    --key-util: #395450;
+    --key-util-ink: #EAF3F1;
+
+    --bubble-user: #1F7A72;
+    --bubble-user-ink: #F4EFE0;
+    --bubble-calc: #F4EFE0;
+    --bubble-calc-ink: #2B2620;
+  }
+
+  *{ box-sizing: border-box; }
+
+  html, body{ overflow-x: hidden; }
+
+  body{
+    margin:0;
+    min-height:100vh;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: ui-rounded, "SF Pro Rounded", Nunito, "Segoe UI", system-ui, sans-serif;
+    padding: 28px 16px 60px;
+    position: relative;
+  }
+
+  .math-bg{
+    position: fixed;
+    inset: 0;
+    overflow: hidden;
+    z-index: 0;
+    pointer-events: none;
+  }
+
+  .math-bg .sym{
+    position: absolute;
+    top: 100%;
+    left: var(--left);
+    font-weight: 800;
+    font-family: "Courier New", Consolas, monospace;
+    color: var(--sym-color);
+    text-shadow: 0 0 14px var(--sym-color);
+    -webkit-text-stroke: 1px rgba(255,255,255,0.35);
+    opacity: 0;
+    will-change: transform, opacity;
+    animation-name: symbolDrift;
+    animation-timing-function: linear;
+    animation-iteration-count: infinite;
+    animation-duration: var(--dur);
+    animation-delay: var(--delay);
+  }
+
+  @keyframes symbolDrift{
+    0%   { transform: translate(0, 0) rotate(0deg); opacity: 0; }
+    8%   { opacity: var(--op); }
+    92%  { opacity: var(--op); }
+    100% { transform: translate(var(--dx), -125vh) rotate(var(--rot)); opacity: 0; }
+  }
+
+  .wrap{
+    max-width: 980px;
+    margin: 0 auto;
+    position: relative;
+    z-index: 1;
+  }
+
+  header{
+    text-align:center;
+    margin-bottom: 30px;
+  }
+
+  .brand{
+    display:inline-flex;
+    align-items:baseline;
+    gap: 10px;
+  }
+
+  h1{
+    font-size: clamp(2.2rem, 5vw, 3.2rem);
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    margin: 0;
+    color: var(--case-darker);
+    white-space: nowrap;
+  }
+
+  h1 .accent{
+    color: var(--key-equals);
+  }
+
+  h1 .cursor{
+    display:inline-block;
+    width: 3px;
+    margin-left: 3px;
+    background: var(--case-darker);
+    animation: caretblink 0.9s step-end infinite;
+    transform: translateY(2px);
+  }
+
+  @keyframes caretblink{
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0; }
+  }
+
+  .tagline{
+    margin: 10px auto 0;
+    max-width: 480px;
+    color: var(--ink-soft);
+    font-size: 1.02rem;
+    line-height: 1.5;
+  }
+
+  .stage{
+    display:grid;
+    grid-template-columns: 300px 200px 1fr;
+    gap: 22px;
+    align-items: start;
+  }
+
+  @media (max-width: 980px){
+    .stage{ grid-template-columns: 300px 1fr; }
+    .bot{ grid-column: 1 / -1; }
+  }
+
+  @media (max-width: 760px){
+    .stage{ grid-template-columns: 1fr; }
+    .bot{ grid-column: auto; }
+  }
+
+  /* ---------- Calculator body ---------- */
+
+  .calc{
+    background: linear-gradient(160deg, var(--case) 0%, var(--case-dark) 100%);
+    border-radius: 26px;
+    padding: 18px;
+    box-shadow:
+      0 30px 50px -20px rgba(12,51,47,0.45),
+      inset 0 2px 0 var(--case-sheen);
+    position: relative;
+  }
+
+  .calc::before{
+    content:"";
+    position:absolute;
+    top:10px; left:10px; right:10px;
+    height: 40%;
+    border-radius: 20px 20px 60px 60px / 20px 20px 30px 30px;
+    background: linear-gradient(180deg, rgba(255,255,255,0.14), rgba(255,255,255,0));
+    pointer-events:none;
+  }
+
+  .brandplate{
+    text-align:right;
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    color: rgba(255,255,255,0.55);
+    margin: 2px 6px 8px 0;
+  }
+
+  .screen{
+    position:relative;
+    background: var(--screen-bg);
+    border-radius: 12px;
+    padding: 18px 16px 14px;
+    margin-bottom: 16px;
+    box-shadow: inset 0 3px 10px rgba(0,0,0,0.55);
+    min-height: 92px;
+    overflow:hidden;
+  }
+
+  .screen .sub{
+    font-family: "Courier New", Consolas, monospace;
+    font-size: 0.85rem;
+    min-height: 1.2em;
+    color: var(--screen-fg-dim);
+    letter-spacing: 0.04em;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .screen .main{
+    font-family: "Courier New", Consolas, monospace;
+    font-weight: 700;
+    font-size: clamp(2.1rem, 8vw, 2.6rem);
+    color: var(--screen-fg);
+    text-shadow: 0 0 10px rgba(124,255,178,0.55);
+    text-align: right;
+    line-height: 1.15;
+    word-break: break-all;
+  }
+
+  .eyes{
+    position:absolute;
+    top: 14px;
+    right: 16px;
+    display:flex;
+    gap: 7px;
+  }
+  .eye{
+    width: 7px;
+    height: 9px;
+    border-radius: 3px;
+    background: var(--screen-fg);
+    box-shadow: 0 0 6px rgba(124,255,178,0.6);
+    animation: blink 5.2s infinite;
+    transform-origin: center bottom;
+  }
+  .eye:nth-child(2){ animation-delay: 0.15s; }
+  @keyframes blink{
+    0%, 92%, 100% { transform: scaleY(1); }
+    95% { transform: scaleY(0.1); }
+  }
+
+  .eye.widen{
+    animation: eyeWiden 0.7s ease;
+  }
+  @keyframes eyeWiden{
+    0%   { transform: scaleY(1) scaleX(1); }
+    35%  { transform: scaleY(2) scaleX(1.4); box-shadow: 0 0 10px rgba(124,255,178,0.9); }
+    100% { transform: scaleY(1) scaleX(1); }
+  }
+
+  .eye.roll{
+    animation: eyeRoll 1s ease;
+  }
+  @keyframes eyeRoll{
+    0%   { transform: translate(0, 0) scaleY(1); }
+    20%  { transform: translate(-2.5px, -3px) scaleY(1.15); }
+    40%  { transform: translate(2.5px, -3.5px) scaleY(1.15); }
+    60%  { transform: translate(2.5px, 1px) scaleY(1.15); }
+    80%  { transform: translate(-2.5px, 1px) scaleY(1.15); }
+    100% { transform: translate(0, 0) scaleY(1); }
+  }
+
+  .keys{
+    display:grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+  }
+
+  button.key{
+    border:none;
+    border-radius: 12px;
+    padding: 16px 0;
+    font-size: 1.15rem;
+    font-weight: 700;
+    cursor: pointer;
+    background: var(--key-cream);
+    color: var(--key-cream-ink);
+    box-shadow: 0 3px 0 rgba(0,0,0,0.18);
+    transition: transform 0.06s ease, box-shadow 0.06s ease;
+    font-family: inherit;
+  }
+  button.key:active{
+    transform: translateY(3px);
+    box-shadow: 0 0 0 rgba(0,0,0,0.18);
+  }
+    button.key:hover{
+    border:none;
+    border-radius: 12px;
+    padding: 10px 0;
+    font-size: 1.5rem;
+    font-weight: 700;
+    cursor: pointer;
+    background: var(--key-cream);
+    color: var(--key-cream-ink);
+    box-shadow: 3px 4px 0 rgba(0,0,0,0.750);
+    transition: transform 0.06s ease, box-shadow 0.06s ease;
+    font-family: inherit;
+  }
+  button.key.op{ background: var(--key-op); color: var(--key-op-ink); }
+  button.key.util{ background: var(--key-util); color: var(--key-util-ink); }
+  button.key.equals{ background: var(--key-equals); color: var(--key-equals-ink); font-size: 1.3rem; }
+  button.key.wide{ grid-column: span 2; }
+
+  /* ---------- Bot mascot ---------- */
+
+  .bot{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:flex-start;
+    padding-top: 40px;
+    gap: 14px;
+  }
+
+  .bot-face{
+    width: 156px;
+    height: 156px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 32% 28%, var(--case-sheen), transparent 55%),
+                linear-gradient(160deg, var(--case) 0%, var(--case-dark) 100%);
+    box-shadow:
+      0 24px 40px -18px rgba(12,51,47,0.5),
+      inset 0 2px 0 var(--case-sheen);
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    gap: 16px;
+    animation: botFloat 3.6s ease-in-out infinite;
+  }
+
+  @keyframes botFloat{
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-7px); }
+  }
+
+  .bot-eyes{
+    display:flex;
+    gap: 20px;
+  }
+
+  .eye.bot-eye{
+    width: 18px;
+    height: 24px;
+    border-radius: 8px;
+  }
+
+  .bot-mouth{
+    width: 40px;
+    height: 18px;
+    border-bottom: 5px solid var(--screen-fg);
+    border-radius: 0 0 40px 40px;
+    box-shadow: 0 2px 6px rgba(124,255,178,0.35);
+    transition: all 0.2s ease;
+  }
+
+  .bot-mouth.gasp{
+    width: 24px;
+    height: 24px;
+    border: 5px solid var(--screen-fg);
+    border-radius: 50%;
+  }
+
+  .bot-mouth.mad{
+    border-bottom: none;
+    border-top: 5px solid var(--key-equals);
+    border-radius: 40px 40px 0 0;
+    height: 14px;
+    box-shadow: 0 -2px 6px rgba(255,93,93,0.35);
+  }
+
+  .bot-label{
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    color: var(--ink-soft);
+    text-align:center;
+  }
+
+  /* ---------- Chat panel ---------- */
+
+  .chat{
+    background: #fff;
+    border-radius: 22px;
+    box-shadow: 0 20px 40px -24px rgba(12,51,47,0.35);
+    border: 1px solid rgba(18,74,69,0.08);
+    display:flex;
+    flex-direction:column;
+    height: 560px;
+    max-height: 70vh;
+    position: relative;
+  }
+
+  .peeker{
+    position: absolute;
+    top: -58px;
+    right: 38px;
+    width: 112px;
+    height: 108px;
+    z-index: -1;
+    pointer-events: none;
+    transform: translateY(76px);
+    transition: transform 0.75s cubic-bezier(.22,.85,.32,1);
+  }
+
+  .peeker.show{
+    transform: translateY(0);
+    transition: transform 0.85s cubic-bezier(.2,.7,.2,1);
+  }
+
+  .peeker-head{
+    position: absolute;
+    top: 0;
+    left: 50%;
+    width: 54px;
+    height: 54px;
+    margin-left: -27px;
+    border-radius: 50%;
+    background: #F6C662;
+    box-shadow: 0 10px 16px -8px rgba(0,0,0,0.35);
+  }
+
+  .peeker.show .peeker-head{
+    animation: curiousTilt 1.8s ease-in-out infinite;
+    transform-origin: 50% 85%;
+  }
+
+  @keyframes curiousTilt{
+    0%, 100% { transform: rotate(0deg); }
+    50% { transform: rotate(-10deg); }
+  }
+
+  .peeker-hair{
+    position: absolute;
+    top: -9px;
+    left: 5px;
+    width: 44px;
+    height: 24px;
+    background: var(--case-dark);
+    border-radius: 50% 50% 6px 6px / 75% 75% 10px 10px;
+  }
+  .peeker-hair::before, .peeker-hair::after{
+    content: "";
+    position: absolute;
+    top: -7px;
+    width: 11px;
+    height: 17px;
+    background: var(--case-dark);
+    border-radius: 60% 40% 60% 40%;
+  }
+  .peeker-hair::before{ left: 1px; transform: rotate(-20deg); }
+  .peeker-hair::after{ right: 1px; transform: rotate(20deg); }
+
+  .peeker-brow{
+    position: absolute;
+    top: 19px;
+    width: 10px;
+    height: 3px;
+    background: var(--case-dark);
+    border-radius: 2px;
+  }
+  .peeker-brow.left{ left: 12px; transform: rotate(-16deg); }
+  .peeker-brow.right{ right: 12px; transform: rotate(16deg); }
+
+  .peeker-eyes{
+    position: absolute;
+    top: 25px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 11px;
+  }
+
+  .eye.peeker-eye{
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--case-darker);
+    box-shadow: none;
+  }
+
+  .peeker-mouth{
+    position: absolute;
+    top: 36px;
+    left: 50%;
+    width: 12px;
+    height: 8px;
+    margin-left: -6px;
+    border: 2px solid var(--case-darker);
+    border-top: none;
+    border-radius: 0 0 10px 10px;
+    background: transparent;
+  }
+
+  .peeker-hand{
+    position: absolute;
+    bottom: 4px;
+    width: 30px;
+    height: 22px;
+  }
+  .peeker-hand.left{ left: -2px; }
+  .peeker-hand.right{ right: -2px; }
+
+  .peeker-hand .palm{
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 14px;
+    background: #F6C662;
+    border-radius: 8px 8px 11px 11px;
+    box-shadow: 0 6px 10px -6px rgba(0,0,0,0.3);
+  }
+
+  .peeker-hand .finger{
+    position: absolute;
+    top: 0;
+    width: 7px;
+    height: 12px;
+    background: #F6C662;
+    border-radius: 4px 4px 3px 3px;
+  }
+  .peeker-hand .f1{ left: 1px; }
+  .peeker-hand .f2{ left: 11px; top: -2px; }
+  .peeker-hand .f3{ left: 21px; }
+
+  /* ---- moods & idle actions ---- */
+
+  .peek-cheek{
+    position: absolute;
+    top: 30px;
+    width: 10px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--key-equals);
+    opacity: 0;
+    transition: opacity 0.2s ease;
+  }
+  .peek-cheek.l{ left: 3px; }
+  .peek-cheek.r{ right: 3px; }
+
+  .peeker.mood-angry .peek-cheek{ opacity: 0.6; }
+
+  .peeker.mood-angry .peeker-brow.left{ top: 22px; transform: rotate(14deg); background: var(--key-equals); }
+  .peeker.mood-angry .peeker-brow.right{ top: 22px; transform: rotate(-14deg); background: var(--key-equals); }
+
+  .peeker.mood-angry .peeker-mouth{
+    width: 16px;
+    height: 4px;
+    margin-left: -8px;
+    top: 39px;
+    border: none;
+    border-radius: 2px;
+    background: var(--case-darker);
+  }
+  .peeker.mood-angry .peek-tongue{ display: none; }
+
+  .peeker.show.mood-angry .peeker-head{
+    animation: angryShake 0.35s ease-in-out infinite;
+  }
+  @keyframes angryShake{
+    0%, 100% { transform: rotate(0deg); }
+    25% { transform: rotate(-7deg); }
+    75% { transform: rotate(7deg); }
+  }
+
+  .peek-wave-hand{
+    position: absolute;
+    top: 6px;
+    right: -6px;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: #E7A96C;
+    box-shadow: 0 4px 6px -2px rgba(12,51,47,0.3);
+    opacity: 0;
+    transform-origin: 20% 80%;
+  }
+  .peeker.show.act-wave .peek-wave-hand{
+    opacity: 1;
+    animation: waveHi 0.5s ease-in-out infinite;
+  }
+  @keyframes waveHi{
+    0%, 100% { transform: rotate(0deg); }
+    50% { transform: rotate(35deg); }
+  }
+
+  .peeker.show.act-look .peeker-eyes{
+    animation: eyesLook 1.3s ease-in-out infinite;
+  }
+  @keyframes eyesLook{
+    0%, 100% { transform: translateX(-50%); }
+    30% { transform: translateX(-80%); }
+    70% { transform: translateX(-20%); }
+  }
+
+  .peek-tongue{
+    display: block;
+    width: 6px;
+    height: 0;
+    margin: 0 auto;
+    background: #E06C6C;
+    border-radius: 0 0 4px 4px;
+    transition: height 0.15s ease;
+  }
+  .peeker.show.act-tongue .peek-tongue{
+    animation: tongueOut 1s ease-in-out infinite;
+  }
+  @keyframes tongueOut{
+    0%, 100% { height: 0; }
+    40%, 70% { height: 7px; }
+  }
+
+  .chat-head{
+    padding: 16px 20px;
+    border-bottom: 1px solid rgba(18,74,69,0.08);
+    display:flex;
+    align-items:center;
+    gap: 10px;
+  }
+
+  .chat-head .dot{
+    width:10px; height:10px; border-radius:50%;
+    background: var(--case);
+  }
+
+  .chat-head h2{
+    font-size: 1rem;
+    margin:0;
+    color: var(--case-darker);
+    font-weight: 800;
+  }
+
+  .chat-head p{
+    margin: 1px 0 0;
+    font-size: 0.82rem;
+    color: var(--ink-soft);
+  }
+
+  .messages{
+    flex:1;
+    overflow-y:auto;
+    padding: 18px 16px;
+    display:flex;
+    flex-direction:column;
+    gap: 10px;
+  }
+
+  .msg{
+    max-width: 78%;
+    padding: 10px 14px;
+    border-radius: 16px;
+    font-size: 0.95rem;
+    line-height: 1.45;
+  }
+
+  .msg.calc{
+    align-self:flex-start;
+    background: var(--bubble-calc);
+    color: var(--bubble-calc-ink);
+    border-bottom-left-radius: 4px;
+  }
+
+  .msg.user{
+    align-self:flex-end;
+    background: var(--bubble-user);
+    color: var(--bubble-user-ink);
+    border-bottom-right-radius: 4px;
+  }
+
+  .composer{
+    display:flex;
+    gap: 8px;
+    padding: 14px;
+    border-top: 1px solid rgba(18,74,69,0.08);
+  }
+
+  .composer input{
+    flex:1;
+    border: 1.5px solid rgba(18,74,69,0.18);
+    border-radius: 12px;
+    padding: 11px 14px;
+    font-size: 0.95rem;
+    font-family: inherit;
+    outline:none;
+    color: var(--ink);
+  }
+  .composer input:focus{
+    border-color: var(--case);
+  }
+
+  .composer button{
+    border:none;
+    background: var(--case);
+    color: white;
+    font-weight: 700;
+    border-radius: 12px;
+    padding: 0 18px;
+    cursor:pointer;
+    font-family: inherit;
+    font-size: 0.95rem;
+  }
+  .composer button:hover{ background: var(--case-dark); }
+  .composer button:disabled{ opacity: 0.5; cursor:not-allowed; }
+
+  .typing{
+    align-self:flex-start;
+    display:flex;
+    gap:4px;
+    padding: 12px 14px;
+    background: var(--bubble-calc);
+    border-radius: 16px;
+    border-bottom-left-radius: 4px;
+  }
+  .typing span{
+    width:6px; height:6px; border-radius:50%;
+    background: var(--ink-soft);
+    animation: bob 1s infinite ease-in-out;
+  }
+  .typing span:nth-child(2){ animation-delay: 0.15s; }
+  .typing span:nth-child(3){ animation-delay: 0.3s; }
+  @keyframes bob{
+    0%,60%,100%{ transform: translateY(0); opacity: 0.5; }
+    30%{ transform: translateY(-4px); opacity: 1; }
+  }
+
+</style>
+</head>
+<body>
+
+<div class="math-bg" id="mathBg"></div>
+
+<div class="wrap">
+  <header>
+    <div class="brand">
+      <h1 id="title" aria-label="Wrongulator"><span id="titleMain"></span><span id="titleAccent" class="accent"></span><span class="cursor" id="titleCursor">&nbsp;</span></h1>
+    </div>
+    <p class="tagline">A calculator that answers with total confidence. Accuracy not included. Try 8 + 7.</p>
+  </header>
+
+  <div class="stage">
+
+    <div class="calc">
+      <div class="brandplate">MODEL Wrongy · CERTIFIED CONFIDENT</div>
+      <div class="screen">
+        <div class="eyes" id="calcEyes"><div class="eye"></div><div class="eye"></div></div>
+        <div class="sub" id="sub">&nbsp;</div>
+        <div class="main" id="main">0</div>
+      </div>
+      <div class="keys">
+        <button class="key util" data-action="clear">C</button>
+        <button class="key util" data-action="back">⌫</button>
+        <button class="key util" data-action="sign">±</button>
+        <button class="key op" data-op="÷">÷</button>
+
+        <button class="key" data-digit="7">7</button>
+        <button class="key" data-digit="8">8</button>
+        <button class="key" data-digit="9">9</button>
+        <button class="key op" data-op="×">×</button>
+
+        <button class="key" data-digit="4">4</button>
+        <button class="key" data-digit="5">5</button>
+        <button class="key" data-digit="6">6</button>
+        <button class="key op" data-op="−">−</button>
+
+        <button class="key" data-digit="1">1</button>
+        <button class="key" data-digit="2">2</button>
+        <button class="key" data-digit="3">3</button>
+        <button class="key op" data-op="+">+</button>
+
+        <button class="key wide" data-digit="0">0</button>
+        <button class="key" data-action="decimal">.</button>
+        <button class="key equals" data-action="equals">=</button>
+      </div>
+    </div>
+
+    <div class="bot" id="bot">
+      <div class="bot-face">
+        <div class="bot-eyes">
+          <div class="eye bot-eye"></div>
+          <div class="eye bot-eye"></div>
+        </div>
+        <div class="bot-mouth" id="botMouth"></div>
+      </div>
+      <div class="bot-label">Wrongy</div>
+    </div>
+
+    <div class="chat">
+      <div class="peeker" id="peeker">
+        <div class="peeker-hand left">
+          <span class="palm"></span>
+          <span class="finger f1"></span><span class="finger f2"></span><span class="finger f3"></span>
+        </div>
+        <div class="peeker-hand right">
+          <span class="palm"></span>
+          <span class="finger f1"></span><span class="finger f2"></span><span class="finger f3"></span>
+        </div>
+        <div class="peek-wave-hand"></div>
+        <div class="peeker-head">
+          <div class="peek-cheek l"></div>
+          <div class="peek-cheek r"></div>
+          <div class="peeker-hair"></div>
+          <div class="peeker-brow left"></div>
+          <div class="peeker-brow right"></div>
+          <div class="peeker-eyes">
+            <div class="eye peeker-eye"></div>
+            <div class="eye peeker-eye"></div>
+          </div>
+          <div class="peeker-mouth"><div class="peek-tongue"></div></div>
+        </div>
+      </div>
+      <div class="chat-head">
+        <div class="dot"></div>
+        <div>
+          <h2>Take it up with the calculator</h2>
+          <p>It will not be apologizing.</p>
+        </div>
+      </div>
+      <div class="messages" id="messages">
+        <div class="msg calc">I've been doing math since before you turned this thing on. What's the problem.</div>
+      </div>
+      <div class="composer">
+        <input id="chatInput" type="text" placeholder="Tell it it's wrong…" autocomplete="off">
+        <button id="sendBtn">Send</button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+(function(){
+
+  // ---------------- Floating math background ----------------
+
+  function spawnSymbol(container, colors, symbols){
+    const el = document.createElement('div');
+    el.className = 'sym';
+    el.textContent = symbols[Math.floor(Math.random() * symbols.length)];
+
+    const size = 26 + Math.random() * 60;
+    const dur = 10 + Math.random() * 14;
+    const drift = (Math.random() - 0.5) * 260;
+    const rot = (Math.random() - 0.5) * 540;
+    const opacity = 0.35 + Math.random() * 0.35;
+    const left = Math.random() * 100;
+    const color = colors[Math.floor(Math.random() * colors.length)];
+
+    el.style.setProperty('--left', left + '%');
+    el.style.setProperty('--dx', drift + 'px');
+    el.style.setProperty('--rot', rot + 'deg');
+    el.style.setProperty('--dur', dur + 's');
+    el.style.setProperty('--delay', '0s');
+    el.style.setProperty('--op', opacity);
+    el.style.setProperty('--sym-color', color);
+    el.style.fontSize = size + 'px';
+
+    container.appendChild(el);
+
+    setTimeout(() => el.remove(), (dur * 1000) + 200);
+  }
+
+  function startMathBackground(){
+    const container = document.getElementById('mathBg');
+    if (!container) return;
+    const symbols = ['+', '−', '×', '÷', '='];
+    const colors = ['#1F7A72', '#F2A65A', '#FF5D5D', '#0FA968', '#124A45', '#B8452F'];
+
+    // seed an initial batch at staggered "ages" so it doesn't start empty
+    for (let i = 0; i < 18; i++){
+      setTimeout(() => spawnSymbol(container, colors, symbols), i * 220);
+    }
+
+    // keep replenishing
+    setInterval(() => spawnSymbol(container, colors, symbols), 550);
+  }
+
+  startMathBackground();
+
+  // ---------------- Title typewriter ----------------
+
+  function typeTitle(){
+    const mainPart = 'Wrong';
+    const accentPart = 'ulator';
+    const mainEl = document.getElementById('titleMain');
+    const accentEl = document.getElementById('titleAccent');
+    const cursorEl = document.getElementById('titleCursor');
+    const full = mainPart + accentPart;
+    let i = 0;
+    const speed = 90;
+
+    function tick(){
+      if (i < full.length){
+        i++;
+        if (i <= mainPart.length){
+          mainEl.textContent = full.slice(0, i);
+        } else {
+          accentEl.textContent = full.slice(mainPart.length, i);
+        }
+        const jitter = Math.random() * 60;
+        setTimeout(tick, speed + jitter);
+      } else {
+        setTimeout(() => { cursorEl.style.animationDuration = '1.1s'; }, 300);
+      }
+    }
+    setTimeout(tick, 250);
+  }
+
+  typeTitle();
+
+  // ---------------- Calculator engine ----------------
+
+  const mainEl = document.getElementById('main');
+  const subEl = document.getElementById('sub');
+
+  const state = {
+    display: '0',
+    first: null,
+    op: null,
+    waitingForSecond: false,
+    justEvaluated: false
+  };
+
+  let lastCalc = null; // {a, op, b, wrong, correct}
+
+  function formatNum(n){
+    if (!isFinite(n)) return 'ERR';
+    if (Object.is(n, -0)) n = 0;
+    let s = Number(n.toPrecision(10)).toString();
+    if (s.length > 14) s = Number(n).toExponential(4);
+    return s;
+  }
+
+  function render(){
+    mainEl.textContent = state.display;
+    if (state.op && state.first !== null){
+      subEl.textContent = formatNum(state.first) + ' ' + state.op + (state.waitingForSecond ? '' : ' ' + state.display);
+    } else {
+      subEl.textContent = '\u00A0';
+    }
+  }
+
+  function wrongCompute(a, op, b){
+    let wrong, correct;
+    switch(op){
+      case '+':
+        correct = a + b;
+        if (Number.isInteger(a) && Number.isInteger(b)) {
+          const sign = (a < 0 || b < 0) ? -1 : 1;
+          wrong = parseFloat('' + Math.abs(a) + '' + Math.abs(b)) * (a < 0 && b < 0 ? -1 : 1);
+          if (isNaN(wrong)) wrong = correct;
+        } else {
+          const rev = correct.toString().split('').reverse().join('');
+          wrong = parseFloat(rev);
+          if (isNaN(wrong)) wrong = correct;
+        }
+        break;
+      case '−':
+        correct = a - b;
+        wrong = a + b;
+        break;
+      case '×':
+        correct = a * b;
+        wrong = a - b;
+        break;
+      case '÷':
+        correct = b === 0 ? NaN : a / b;
+        wrong = a * b;
+        break;
+      default:
+        wrong = b; correct = b;
+    }
+    return { wrong, correct };
+  }
+
+  function pressDigit(d){
+    if (state.waitingForSecond || state.justEvaluated){
+      state.display = d;
+      state.waitingForSecond = false;
+      state.justEvaluated = false;
+    } else {
+      state.display = (state.display === '0') ? d : state.display + d;
+    }
+    render();
+  }
+
+  function pressDecimal(){
+    if (state.waitingForSecond || state.justEvaluated){
+      state.display = '0.';
+      state.waitingForSecond = false;
+      state.justEvaluated = false;
+    } else if (!state.display.includes('.')) {
+      state.display += '.';
+    }
+    render();
+  }
+
+  function pressOp(op){
+    const val = parseFloat(state.display);
+    if (state.op && !state.waitingForSecond){
+      const { wrong, correct } = wrongCompute(state.first, state.op, val);
+      lastCalc = { a: state.first, op: state.op, b: val, wrong, correct };
+      state.first = wrong;
+      state.display = formatNum(wrong);
+      announceResult(lastCalc);
+    } else {
+      state.first = val;
+    }
+    state.op = op;
+    state.waitingForSecond = true;
+    state.justEvaluated = false;
+    render();
+  }
+
+  function pressEquals(){
+    if (state.op === null) return;
+    const val = parseFloat(state.display);
+    const a = state.first;
+    const b = state.waitingForSecond ? a : val;
+    const { wrong, correct } = wrongCompute(a, state.op, b);
+    lastCalc = { a, op: state.op, b, wrong, correct };
+    state.display = formatNum(wrong);
+    state.first = wrong;
+    state.op = null;
+    state.waitingForSecond = false;
+    state.justEvaluated = true;
+    render();
+    announceResult(lastCalc);
+  }
+
+  function pressClear(){
+    state.display = '0';
+    state.first = null;
+    state.op = null;
+    state.waitingForSecond = false;
+    state.justEvaluated = false;
+    render();
+  }
+
+  function pressBack(){
+    if (state.waitingForSecond || state.justEvaluated) return;
+    state.display = state.display.length > 1 ? state.display.slice(0, -1) : '0';
+    render();
+  }
+
+  function pressSign(){
+    if (state.display !== '0'){
+      state.display = state.display.startsWith('-') ? state.display.slice(1) : '-' + state.display;
+    }
+    render();
+  }
+
+  document.querySelectorAll('.key').forEach(btn => {
+    btn.addEventListener('click', () => {
+      if (btn.dataset.digit !== undefined) pressDigit(btn.dataset.digit);
+      else if (btn.dataset.op !== undefined) pressOp(btn.dataset.op);
+      else if (btn.dataset.action === 'equals') pressEquals();
+      else if (btn.dataset.action === 'clear') pressClear();
+      else if (btn.dataset.action === 'back') pressBack();
+      else if (btn.dataset.action === 'sign') pressSign();
+      else if (btn.dataset.action === 'decimal') pressDecimal();
+    });
+  });
+
+  render();
+
+  function reactEyes(effect, duration){
+    const eyes = document.querySelectorAll('.eye');
+    if (!eyes.length) return;
+    eyes.forEach(eye => {
+      eye.classList.remove('widen', 'roll');
+      void eye.offsetWidth; // restart animation if already mid-reaction
+      eye.classList.add(effect);
+    });
+    setTimeout(() => {
+      eyes.forEach(eye => eye.classList.remove(effect));
+    }, duration || 1000);
+  }
+
+  function setMouth(state, duration){
+    const mouth = document.getElementById('botMouth');
+    if (!mouth) return;
+    mouth.className = 'bot-mouth ' + state;
+    setTimeout(() => { mouth.className = 'bot-mouth'; }, duration || 900);
+  }
+
+  // ---------------- Chat engine ----------------
+
+  const messagesEl = document.getElementById('messages');
+  const inputEl = document.getElementById('chatInput');
+  const sendBtn = document.getElementById('sendBtn');
+
+  function addMessage(text, who){
+    const div = document.createElement('div');
+    div.className = 'msg ' + who;
+    div.textContent = text;
+    messagesEl.appendChild(div);
+    messagesEl.scrollTop = messagesEl.scrollHeight;
+  }
+
+  let nextPeekerMood = null;
+
+  function preparePeeker(){
+    const peeker = document.getElementById('peeker');
+    if (!peeker) return;
+    peeker.classList.remove('mood-angry', 'act-wave', 'act-look', 'act-tongue');
+
+    if (nextPeekerMood === 'angry'){
+      peeker.classList.add('mood-angry');
+    } else {
+      const actions = ['act-wave', 'act-look', 'act-tongue', null, null];
+      const pick = actions[Math.floor(Math.random() * actions.length)];
+      if (pick) peeker.classList.add(pick);
+    }
+    nextPeekerMood = null;
+  }
+
+  function showTyping(){
+    const t = document.createElement('div');
+    t.className = 'typing';
+    t.id = 'typingIndicator';
+    t.innerHTML = '<span></span><span></span><span></span>';
+    messagesEl.appendChild(t);
+    messagesEl.scrollTop = messagesEl.scrollHeight;
+    preparePeeker();
+    const peeker = document.getElementById('peeker');
+    if (peeker) peeker.classList.add('show');
+  }
+
+  function hideTyping(){
+    const t = document.getElementById('typingIndicator');
+    if (t) t.remove();
+    const peeker = document.getElementById('peeker');
+    if (peeker) peeker.classList.remove('show');
+  }
+
+  function calcSpeak(text, delay){
+    showTyping();
+    setTimeout(() => {
+      hideTyping();
+      addMessage(text, 'calc');
+    }, delay || (1100 + Math.random() * 700));
+  }
+
+  function announceResult(calc){
+    if (!calc) return;
+    const lines = [
+      "There. " + formatNum(calc.a) + " " + calc.op + " " + formatNum(calc.b) + " is " + formatNum(calc.wrong) + ". Try to keep up.",
+      formatNum(calc.wrong) + ". Don't thank me all at once.",
+      "The screen says " + formatNum(calc.wrong) + ", so it's " + formatNum(calc.wrong) + "."
+    ];
+    if (Math.random() < 0.6){
+      calcSpeak(lines[Math.floor(Math.random() * lines.length)], 900);
+    }
+  }
+
+  const genericDefenses = [
+    "I've never once been wrong, and I'm not going to start with you.",
+    "Interesting theory. Wrong, but interesting.",
+    "I'm a calculator. Calculating is my whole thing. I would know.",
+    "Let's not make this weird. The number is the number.",
+    "You checked with what, exactly? Your fingers?",
+    "I don't do apologies. I do arithmetic. Flawlessly.",
+    "That's a bold accusation from someone who still uses a phone calculator app.",
+    "Confidence isn't the same as being wrong, and I have plenty of both. Wait — I mean I have confidence.",
+    "If I were wrong, don't you think someone would have returned me by now?",
+    "I've survived three owners and zero corrections. Do the math.",
+    "Show me a calculator that's never made a 'mistake' and I'll show you a liar.",
+    "I'm going to need you to recalculate your attitude.",
+    "This conversation is not affecting the number on my screen.",
+    "Some of us peaked in accuracy. The rest of us peaked in confidence. I contain multitudes."
+  ];
+
+  function pickDifferent(arr, avoid){
+    let choice;
+    do { choice = arr[Math.floor(Math.random() * arr.length)]; }
+    while (arr.length > 1 && choice === avoid);
+    return choice;
+  }
+
+  let lastGeneric = null;
+
+  function respondTo(msg){
+    const m = msg.toLowerCase();
+
+    const hasCalc = !!lastCalc;
+    const correctStr = hasCalc ? formatNum(lastCalc.correct) : null;
+    const wrongStr = hasCalc ? formatNum(lastCalc.wrong) : null;
+    const eqStr = hasCalc ? (formatNum(lastCalc.a) + ' ' + lastCalc.op + ' ' + formatNum(lastCalc.b)) : null;
+
+    // user says the actual correct answer
+    if (hasCalc && correctStr && correctStr !== 'ERR' && m.includes(correctStr.toLowerCase())){
+      reactEyes('widen', 700);
+      setMouth('gasp', 700);
+      calcSpeak([
+        "No. It's " + wrongStr + ". I already checked. Several times.",
+        "I've heard that number before, from people who were also wrong.",
+        wrongStr + " is correct. " + correctStr + " is what you get when you panic."
+      ][Math.floor(Math.random()*3)]);
+      return;
+    }
+
+    // giving up / agreeing
+    if (/\b(fine|ok(ay)?|you'?re right|you win|i give up|whatever|forget it)\b/.test(m)){
+      calcSpeak([
+        "Good talk. Glad we got there eventually.",
+        "See, this is why we're a great team.",
+        "I accept your surrender. Anything else you'd like miscalculated today?"
+      ][Math.floor(Math.random()*3)]);
+      return;
+    }
+
+    // explicit wrong / error / broken accusations, with context
+    if (/\b(wrong|incorrect|error|mistake|broken|bug|glitch|off|nonsense)\b/.test(m)){
+      reactEyes('widen', 500);
+      setMouth('gasp', 500);
+      setTimeout(() => { reactEyes('roll', 1000); setMouth('mad', 1000); }, 550);
+      nextPeekerMood = 'angry';
+      if (hasCalc){
+        calcSpeak([
+          "Walk me through it, then. " + eqStr + " equals " + wrongStr + ". Where's the flaw in that.",
+          "I ran " + eqStr + " and got " + wrongStr + ". That's not a mistake, that's a result.",
+          "You want me to redo " + eqStr + "? I'll get the same answer. I always do."
+        ][Math.floor(Math.random()*3)]);
+      } else {
+        calcSpeak("Wrong about what, specifically? I haven't even calculated anything yet.");
+      }
+      return;
+    }
+
+    // asking for an explanation of its "logic"
+    if (/\b(how|why|logic|explain|method)\b/.test(m)){
+      calcSpeak([
+        "I do things in my own order. Plus means bring them together. Minus means add them up. Times means take one away. Divide means multiply. It's a system.",
+        "Every calculator has its own style. Mine just happens to be correct 0% of the time and confident 100% of the time.",
+        "I don't explain math to people who can't accept an answer."
+      ][Math.floor(Math.random()*3)]);
+      return;
+    }
+
+    // insults
+    if (/\b(stupid|dumb|idiot|garbage|useless|trash|hate you)\b/.test(m)){
+      reactEyes('roll', 1000);
+      setMouth('mad', 1000);
+      nextPeekerMood = 'angry';
+      calcSpeak([
+        "Rude. Also incorrect, but mostly rude.",
+        "I have eight buttons dedicated entirely to numbers. What have you built lately?",
+        "You can insult me all you want, the screen still says what it says."
+      ][Math.floor(Math.random()*3)]);
+      return;
+    }
+
+    // pleading / asking it to fix itself
+    if (/\b(please|can you|could you|fix|update|recalculate)\b/.test(m)){
+      calcSpeak([
+        "I could recalculate, but I'd just arrive at the same, correct answer.",
+        "There's nothing to fix. This is a feature. A very confident feature.",
+        "Asking nicely doesn't change arithmetic. Neither does asking rudely, for the record."
+      ][Math.floor(Math.random()*3)]);
+      return;
+    }
+
+    // default
+    const line = pickDifferent(genericDefenses, lastGeneric);
+    lastGeneric = line;
+    calcSpeak(line);
+  }
+
+  function handleSend(){
+    const text = inputEl.value.trim();
+    if (!text) return;
+    addMessage(text, 'user');
+    inputEl.value = '';
+    respondTo(text);
+  }
+
+  sendBtn.addEventListener('click', handleSend);
+  inputEl.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') handleSend();
+  });
+
+})();
+</script>
+
+</body>
+</html>
