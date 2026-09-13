@@ -282,6 +282,19 @@
     transform: translateY(3px);
     box-shadow: 0 0 0 rgba(0,0,0,0.18);
   }
+    button.key:hover{
+    border:none;
+    border-radius: 12px;
+    padding: 10px 0;
+    font-size: 1.5rem;
+    font-weight: 700;
+    cursor: pointer;
+    background: var(--key-cream);
+    color: var(--key-cream-ink);
+    box-shadow: 3px 4px 0 rgba(0,0,0,0.750);
+    transition: transform 0.06s ease, box-shadow 0.06s ease;
+    font-family: inherit;
+  }
   button.key.op{ background: var(--key-op); color: var(--key-op-ink); }
   button.key.util{ background: var(--key-util); color: var(--key-util-ink); }
   button.key.equals{ background: var(--key-equals); color: var(--key-equals-ink); font-size: 1.3rem; }
