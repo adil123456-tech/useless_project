@@ -57,31 +57,23 @@ open index.html
 For Software:
 
 # Screenshots (Add at least 3)
-![Screenshot1](Add screenshot of the welcome screen here)
+<img width="1280" height="640" alt="git (1)" src="index.png" />
 *The welcome/boot screen — the calculator "calibrates its confidence" before letting you in.*
 
-![Screenshot2](Add screenshot of the calculator here)
-*The main calculator interface, mid-calculation, giving a confidently wrong answer.*
+[Screenshot2]<img width="1280" height="640" alt="git (1)" src="2nd.png" />
 
-![Screenshot3](Add screenshot of the chat argument here)
+*The main calculator interface, mid-calculation, giving a confidently wrong answer.*
+[Screenshot3]<img width="1280" height="640" alt="git (1)" src="3rd.png" />
 *The chat panel with the mascot and peeker reacting after being told the answer is wrong.*
 
 # Diagrams
-![Workflow](Add your workflow/architecture diagram here)
+
 *User presses keys → wrong-math engine computes an incorrect result alongside the real one → screen displays the wrong answer → user can dispute it in chat → keyword-matching engine picks an in-character defense → mascot and peeker animate to match the mood.*
 
 ### Project Demo
 # Video
 [Add your demo video link here]
 *Shows the boot sequence, a few wrong calculations (try 8 + 7), and an argument with the calculator over its math.*
-
-# Additional Demos
-[Add any extra demo materials/links]
-
-## Team Contributions
-- [Name 1]: [Specific contributions]
-- [Name 2]: [Specific contributions]
-- [Name 3]: [Specific contributions]
 
 ---
 Made with ❤️ at TinkerHub Useless Projects
